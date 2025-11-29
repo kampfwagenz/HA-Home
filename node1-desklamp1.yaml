@@ -57,6 +57,17 @@ binary_sensor:
   - platform: status
     name: "${friendly_name} Status"
 
+  # Touch Switch on GPIO1 (TX)
+  - platform: gpio
+    pin:
+      number: 1
+      mode: INPUT_PULLUP # Assuming a common touch switch module that pulls the pin low when touched
+      inverted: True # Invert so that a touch (LOW) registers as ON
+    name: "Desklamp Touch Switch"
+    on_press:
+      then:
+        - light.toggle: desklamp_light
+
 sensor:
   - platform: wifi_signal
     id: wifi_signal_strength
@@ -134,6 +145,8 @@ text_sensor:
 # NOTE: GPIO3 is used for serial communication (RX). You may need to disconnect the relay
 # when flashing new firmware.
 # NOTE: GPIO2 must be HIGH during boot. Ensure your MOSFET circuit does not interfere.
+# NOTE: GPIO1 is used for serial communication (TX). You may need to disconnect the touch switch
+# when flashing new firmware.
 
 # 1. Relay Control (Simple ON/OFF) on GPIO3
 switch:
