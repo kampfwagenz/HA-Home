@@ -173,6 +173,7 @@ light:
     name: "${friendly_name} Light"
     id: desklamp_light
     output: pwm_output
+    max_power: 0.8
     # The relay is wired to the same light circuit as a safety/master switch.
     # We can use a custom template to ensure the relay is always ON when the light is ON,
     # and OFF when the light is OFF.
