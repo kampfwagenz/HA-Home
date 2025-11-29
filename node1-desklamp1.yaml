@@ -163,6 +163,7 @@ output:
     pin: GPIO2
     id: pwm_output
     frequency: 1000 Hz
+    inverted: true
 
 # 3. Combined Light Component for Home Assistant
 # This creates a single light entity in Home Assistant that has both ON/OFF (via relay)
