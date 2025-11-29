@@ -164,6 +164,7 @@ output:
     id: pwm_output
     frequency: 1000 Hz
     inverted: true
+    max_power: 0.8
 
 # 3. Combined Light Component for Home Assistant
 # This creates a single light entity in Home Assistant that has both ON/OFF (via relay)
@@ -173,7 +174,6 @@ light:
     name: "${friendly_name} Light"
     id: desklamp_light
     output: pwm_output
-    max_power: 0.8
     # The relay is wired to the same light circuit as a safety/master switch.
     # We can use a custom template to ensure the relay is always ON when the light is ON,
     # and OFF when the light is OFF.
