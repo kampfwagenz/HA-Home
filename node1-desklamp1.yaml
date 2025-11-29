@@ -30,9 +30,12 @@ time:
   - platform: homeassistant
     id: esptime
 
+# Status LED moved to GPIO0 to free up GPIO2 for the MOSFET.
+# Note: GPIO0 is used for boot mode selection (must be HIGH or floating for normal boot).
+# Ensure the status LED circuit does not pull GPIO0 low during boot.
 status_led:
   pin:
-    number: 2
+    number: 0
     inverted: False
 
 api:
@@ -123,39 +126,44 @@ text_sensor:
     entity_category: "diagnostic"
     device_class: ""
 
-# Desklamp Control - Core Functionality
-# ESP01+1Ch relay+D4184 Mosfet module conected in GPIO3.
-# This is configured as a simple ON/OFF switch using the GPIO pin.
+# Desklamp Control - Separate Relay and MOSFET Control
+#
+# GPIO3 (RX) for the 1Ch Relay (Simple ON/OFF)
+# GPIO2 for the D4184 MOSFET (PWM Dimming)
+#
+# NOTE: GPIO3 is used for serial communication (RX). You may need to disconnect the relay
+# when flashing new firmware.
+# NOTE: GPIO2 must be HIGH during boot. Ensure your MOSFET circuit does not interfere.
 
+# 1. Relay Control (Simple ON/OFF) on GPIO3
 switch:
   - platform: gpio
     pin: GPIO3
-    name: "Desklamp Power Switch"
-    id: desklamp_power_switch
-    # ESPHome defaults to HIGH being ON. If the relay is active-low, use:
+    name: "Desklamp Relay Switch"
+    id: desklamp_relay_switch
+    # If your relay is active-low, uncomment the line below:
     # inverted: true
 
+# 2. MOSFET Control (PWM Dimming) on GPIO2
+output:
+  - platform: esp8266_pwm
+    pin: GPIO2
+    id: pwm_output
+    frequency: 1000 Hz
+
+# 3. Combined Light Component for Home Assistant
+# This creates a single light entity in Home Assistant that has both ON/OFF (via relay)
+# and brightness control (via MOSFET).
 light:
-  - platform: switch
+  - platform: monochromatic
     name: "${friendly_name} Light"
     id: desklamp_light
-    output: desklamp_power_switch
-
-# Note on GPIO3: This pin is typically used for serial communication (RX) on the ESP01.
-# While it can be used as an output, it might interfere with serial logging or flashing.
-#
-# Note on MOSFET (D4184): This component suggests future dimming (PWM).
-# To enable dimming, you would change the light component to:
-# light:
-#   - platform: monochromatic
-#     name: "${friendly_name} Light"
-#     output: pwm_output
-#
-# And add a PWM output component:
-# output:
-#   - platform: esp8266_pwm
-#     pin: GPIO3
-#     id: pwm_output
-#     frequency: 1000 Hz
-#
-# And remove the switch component.
+    output: pwm_output
+    # The relay is wired to the same light circuit as a safety/master switch.
+    # We can use a custom template to ensure the relay is always ON when the light is ON,
+    # and OFF when the light is OFF.
+    # This is a common pattern for combining a relay and a dimmer.
+    on_turn_on:
+      - switch.turn_on: desklamp_relay_switch
+    on_turn_off:
+      - switch.turn_off: desklamp_relay_switch
